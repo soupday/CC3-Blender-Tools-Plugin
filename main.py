@@ -24,7 +24,6 @@ from PySide2 import *
 from PySide2.shiboken2 import wrapInstance
 from enum import IntEnum
 
-LOG_LEVEL = 3
 
 class TextureChannel(IntEnum):
     METALLIC      = 0
@@ -534,64 +533,8 @@ def message_box(msg):
     RLPy.RUi.ShowMessageBox("Message", str(msg), RLPy.EMsgButton_Ok)
 
 
-def log_detail(msg):
-    """Log an info message to console."""
-    if LOG_LEVEL >= 3:
-        print("Info", str(msg))
-
-
-def log_info(msg):
-    """Log an info message to console."""
-    if LOG_LEVEL >= 2:
-        print("Info", str(msg))
-
-
-def log_warn(msg):
-    """Log a warning message to console."""
-    if LOG_LEVEL >= 1:
-        print("Warning", str(msg))
-
-
-def log_error(msg, e = None):
-    """Log an error message to console."""
-    if e is not None:
-        print("Error", "    -> " + getattr(e, 'message', repr(e)))
-    else:
-        print("Error", str(msg))
-
-
-FUNC_TIMER = 0
-FUNC_START = 0
-
-
-def start_func_timer():
-    global FUNC_START, FUNC_TIMER
-    FUNC_TIMER = 0
-
-def mark_func_time():
-    global FUNC_START
-    FUNC_START = time.perf_counter()
-
-
-def add_func_time():
-    global FUNC_START, FUNC_TIMER
-    duration = time.perf_counter() - FUNC_START
-    FUNC_TIMER += duration
-
-
-def log_func_time(msg, unit = "s"):
-    global FUNC_TIMER
-    duration = FUNC_TIMER
-    if unit == "ms":
-        duration *= 1000
-    elif unit == "us":
-        duration *= 1000000
-    elif unit == "ns":
-        duration *= 1000000000
-    print(msg + ": " + str(duration) + " " + unit)
-
-
 TIMER = 0
+
 def start_timer():
     global TIMER
     TIMER = time.perf_counter()
