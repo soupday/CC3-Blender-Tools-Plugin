@@ -1,8 +1,25 @@
+# Copyright (C) 2021 Victor Soupday
+# This file is part of CC3-Blender-Tools-Plugin <https://github.com/soupday/CC3-Blender-Tools-Plugin>
+#
+# CC3-Blender-Tools-Plugin is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# CC3-Blender-Tools-Plugin is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with CC3-Blender-Tools-Plugin.  If not, see <https://www.gnu.org/licenses/>.
+
 import RLPy
 import json
 import os
 import time
 import shutil
+import random
 from PySide2 import *
 from PySide2.shiboken2 import wrapInstance
 from enum import IntEnum
@@ -58,6 +75,8 @@ TEXTURE_MAPS = { # { "json_channel_name": [RL_Texture_Channel, is_Substance_Pain
     "Normal": [RLPy.EMaterialTextureChannel_Normal, True, "normal"],
 }
 
+NUM_SUBSTANCE_MAPS = 10
+
 
 def initialize_plugin():
     # Add menu
@@ -99,16 +118,16 @@ class Importer:
     count_pbr = 0
     count_custom = 0
     mat_duplicates = {}
+    substance_import_success = False
 
     def __init__(self, file_path):
-        print("Importing character fbx: " + file_path)
+        print("================================================================")
+        print("New character import, Fbx: " + file_path)
         self.fbx_path = file_path
         self.fbx_file = os.path.basename(self.fbx_path)
         self.fbx_folder = os.path.dirname(self.fbx_path)
         self.fbx_name = os.path.splitext(self.fbx_file)[0]
         self.json_path = os.path.join(self.fbx_folder, self.fbx_name + ".json")
-        if os.path.exists(self.json_path):
-            print("Using Json data: " + self.json_path)
         self.json_data = None
         self.avatar = None
 
@@ -222,7 +241,7 @@ class Importer:
 
         char_json = get_character_json(json_data, self.fbx_name, self.fbx_name)
 
-        print("Beginning Json parse and texture import:")
+        print("Rebuilding character materials and texures:")
 
         start_timer()
 
@@ -234,7 +253,7 @@ class Importer:
 
         RLPy.RGlobal.ObjectModified(avatar, RLPy.EObjectModifiedType_Material)
 
-        log_timer("Done! Materials applied in: ")
+        log_timer("Import complete! Materials applied in: ")
 
 
     def import_custom_textures(self, char_json, material_component, mesh_names):
@@ -245,6 +264,8 @@ class Importer:
 
         key_zero = RLPy.RKey()
         key_zero.SetTime(RLPy.RTime(0))
+
+        print(" - Beginning custom shader import...")
 
         for mesh_name in mesh_names:
             mesh_json_name = fix_name(mesh_name)
@@ -299,6 +320,8 @@ class Importer:
                         is_substance = TEXTURE_MAPS[tex_id][1]
                         if self.mat_duplicates[mat_name]: # fully process textures for materials with duplicates,
                             is_substance = False          # as the substance texture import can't really deal with them.
+                        if not self.substance_import_success: # or if the substance texture import method failed
+                            is_substance = False              # import all textures individually
                         tex_info = get_pbr_texture_info(mat_json, tex_id)
                         if tex_info and tex_info["Texture Path"] and tex_info["Texture Path"] != "":
                             tex_path = convert_texture_path(tex_info, self.fbx_folder)
@@ -321,6 +344,8 @@ class Importer:
 
             self.update_custom_progress(2)
 
+        print(" - Custom shader import complete!")
+
 
     def import_substance_textures(self, char_json, material_component, mesh_names):
         """Cache all PBR textures in a temporary location to load in all at once with:
@@ -328,14 +353,23 @@ class Importer:
            This is *much* faster than loading these textures individually,
            but requires a particular directory and file naming structure.
         """
-        global TEXTURE_MAPS
+        global TEXTURE_MAPS, NUM_SUBSTANCE_MAPS
+
+        print(" - Beginning substance texture import...")
 
         self.update_pbr_progress(1)
+        self.substance_import_success = False
 
         # create temp folder for substance import (use the temporary files location from the RGlobal.GetPath)
         res = RLPy.RGlobal.GetPath(RLPy.EPathType_Temp, "")
         temp_path = res[1]
-        temp_folder = os.path.join(temp_path, "_SDSBSITEX_")
+        # safest not to write temporary files in random locations...
+        if not os.path.exists(temp_path):
+            print(" - Unable to determine temporary file location, skipping substance import!")
+            return
+
+        temp_folder = os.path.join(temp_path, "CC3_BTP_Temp_" + random_string(8))
+        print(" - Using temp folder: " + temp_folder)
 
         # delete if exists
         if os.path.exists(temp_folder):
@@ -383,12 +417,13 @@ class Importer:
             else:
 
                 for mat_name in mat_names:
+
+                    pid = mesh_name + " / " + mat_name
+
                     if not self.mat_duplicates[mat_name]: # only process those materials here that don't have duplicates
                         mat_json_name = fix_name(mat_name)
                         mat_json = get_material_json(obj_json, mat_json_name)
                         if mat_json:
-
-                            pid = mesh_name + " / " + mat_name
 
                             # create folder with the matertial name
                             mesh_folder = os.path.join(temp_folder, mat_name)
@@ -411,12 +446,19 @@ class Importer:
                                             substance_path = os.path.join(mesh_folder, substance_name)
                                             shutil.copyfile(tex_path, substance_path)
                                     self.update_pbr_progress(2, pid)
+                    else:
+                        self.count_pbr += (NUM_SUBSTANCE_MAPS - 1)
+                        self.update_pbr_progress(2, pid)
 
         self.update_pbr_progress(3)
         avatar = self.avatar
 
         # load all pbr textures in one go from the texture cache
         RLPy.RFileIO.LoadSubstancePainterTextures(avatar, temp_folder)
+        self.substance_import_success = True
+
+        print (" - Substance texture import successful!")
+        print (" - Cleaning up temp folder: " + temp_folder)
 
         # delete temp folder
         if os.path.exists(temp_folder):
@@ -430,7 +472,7 @@ class Importer:
            to initialise progress bars.
            Also determine which materials may have duplicate names as these need to be treated differently.
         """
-        global TEXTURE_MAPS
+        global TEXTURE_MAPS, NUM_SUBSTANCE_MAPS
 
         num_materials = 0
         num_params = 0
@@ -460,7 +502,7 @@ class Importer:
                     material_component.SetShader(mesh_name, mat_name, wanted_shader)
 
                 # Calculate stats
-                num_pbr += 10
+                num_pbr += NUM_SUBSTANCE_MAPS
                 num_materials += 1
                 # Custom shader parameters
                 shader_params = material_component.GetShaderParameterNames(mesh_name, mat_name)
@@ -520,6 +562,7 @@ def log_error(msg, e = None):
 
 FUNC_TIMER = 0
 FUNC_START = 0
+
 
 def start_func_timer():
     global FUNC_START, FUNC_TIMER
@@ -583,6 +626,7 @@ def convert_texture_path(tex_info, folder):
 def read_json(json_path):
     try:
         if os.path.exists(json_path):
+            print(" - Loading Json data: " + json_path)
 
             # determine start of json text data
             file_bytes = open(json_path, "rb")
@@ -599,13 +643,13 @@ def read_json(json_path):
             text_data = file.read()
             json_data = json.loads(text_data)
             file.close()
-            print("Json data successfully parsed!")
+            print(" - Json data successfully parsed!")
             return json_data
 
-        print("No Json Data!")
+        print(" - No Json Data!")
         return None
     except:
-        print("Error reading Json Data!")
+        print(" - Error reading Json Data!")
         return None
 
 
@@ -768,6 +812,16 @@ def get_sss_var(material_json, var_name):
         return convert_var(var_name, result)
     except:
         return None
+
+
+def random_string(length):
+    chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+    l = len(chars)
+    res = ""
+    for i in range(0, length):
+        r = random.randrange(0, l)
+        res += chars[r]
+    return res
 
 
 def run_script():
