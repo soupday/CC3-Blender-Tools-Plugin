@@ -13,3 +13,17 @@ The character export from Blender must be generated with the **CC3 Blender Tools
 - Load the script into the project from the **Plugins > Blender Auto-setup > Import From Blender** menu.
 
 Alternatively the main.py script can run as a standalone script from the **Script > Load Python** menu.
+
+## Known Issues
+
+By default the FBX export settings have embed textures switched on, but this makes the export incompatible with re-importing the character back into CC3 as the textures are hidden in the original fbx and are not accessible to the file system.
+
+**Always turn off embed textures.**
+
+Hidden faces information for clothing and accessories is lost upon re-importing into CC3.
+
+Currently Subsurface scattering settings (Falloff color and Scattering Radius) for skin, eyes teeth and tongue cannot be re-applied as there is no python interface to do so, so these settings will be reset to their defaults.
+
+Likewise Displacement map tessellation settings also cannot be re-applied and are reset to defaults.
+
+Some older characters import with the upper and lower teeth at odd angles. Replacing the teeth in CC3 will fix the issue. Alternatively there is an export option to reset the bone roll to zero on the upper and lower teeth bones. This appears to fix the problem but it is unknown if these changes to the teeth bones will cause further problems later.
