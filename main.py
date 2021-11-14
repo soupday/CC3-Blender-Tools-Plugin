@@ -269,77 +269,78 @@ class Importer:
         for mesh_name in mesh_names:
             mesh_json_name = fix_name(mesh_name)
             obj_json = get_object_json(char_json, mesh_name)
-            mat_names = material_component.GetMaterialNames(mesh_json_name)
-            for mat_name in mat_names:
-                mat_json_name = fix_name(mat_name)
-                mat_json = get_material_json(obj_json, mat_json_name)
+            if obj_json:
+                mat_names = material_component.GetMaterialNames(mesh_json_name)
+                for mat_name in mat_names:
+                    mat_json_name = fix_name(mat_name)
+                    mat_json = get_material_json(obj_json, mat_json_name)
 
-                if mat_json:
+                    if mat_json:
 
-                    pid = mesh_name + " / " + mat_name
+                        pid = mesh_name + " / " + mat_name
 
-                    # Material parameters
-                    diffuse_value = get_material_var(mat_json, "Diffuse Color")
-                    diffuse_color = RLPy.RRgb(diffuse_value[0], diffuse_value[1], diffuse_value[2])
-                    ambient_value = get_material_var(mat_json, "Ambient Color")
-                    ambient_color = RLPy.RRgb(ambient_value[0], ambient_value[1], ambient_value[2])
-                    specular_value = get_material_var(mat_json, "Specular Color")
-                    specular_color = RLPy.RRgb(specular_value[0], specular_value[1], specular_value[2])
-                    glow_strength = mat_json["Self Illumination"] * 100.0
-                    opacity_strength = mat_json["Opacity"] * 100.0
-                    material_component.AddDiffuseKey(key_zero, mesh_name, mat_name, diffuse_color)
-                    material_component.AddAmbientKey(key_zero, mesh_name, mat_name, ambient_color)
-                    material_component.AddSpecularKey(key_zero, mesh_name, mat_name, 0.0)
-                    material_component.AddSelfIlluminationKey(key_zero, mesh_name, mat_name, glow_strength)
-                    material_component.AddOpacityKey(key_zero, mesh_name, mat_name, opacity_strength)
+                        # Material parameters
+                        diffuse_value = get_material_var(mat_json, "Diffuse Color")
+                        diffuse_color = RLPy.RRgb(diffuse_value[0], diffuse_value[1], diffuse_value[2])
+                        ambient_value = get_material_var(mat_json, "Ambient Color")
+                        ambient_color = RLPy.RRgb(ambient_value[0], ambient_value[1], ambient_value[2])
+                        specular_value = get_material_var(mat_json, "Specular Color")
+                        specular_color = RLPy.RRgb(specular_value[0], specular_value[1], specular_value[2])
+                        glow_strength = mat_json["Self Illumination"] * 100.0
+                        opacity_strength = mat_json["Opacity"] * 100.0
+                        material_component.AddDiffuseKey(key_zero, mesh_name, mat_name, diffuse_color)
+                        material_component.AddAmbientKey(key_zero, mesh_name, mat_name, ambient_color)
+                        material_component.AddSpecularKey(key_zero, mesh_name, mat_name, 0.0)
+                        material_component.AddSelfIlluminationKey(key_zero, mesh_name, mat_name, glow_strength)
+                        material_component.AddOpacityKey(key_zero, mesh_name, mat_name, opacity_strength)
 
-                    shader = material_component.GetShader(mesh_name, mat_name)
+                        shader = material_component.GetShader(mesh_name, mat_name)
 
-                    # Custom shader parameters
-                    shader_params = material_component.GetShaderParameterNames(mesh_name, mat_name)
-                    for param in shader_params:
-                        json_value = get_shader_var(mat_json, param)
-                        if json_value is not None:
-                            material_component.SetShaderParameter(mesh_name, mat_name, param, json_value)
-                        self.update_custom_progress(1, pid)
-
-                    # Custom shader textures
-                    shader_textures = material_component.GetShaderTextureNames(mesh_name, mat_name)
-                    if shader_textures:
-                        for shader_texture in shader_textures:
-                            tex_info = get_shader_texture_info(mat_json, shader_texture)
-                            if tex_info:
-                                tex_path = convert_texture_path(tex_info, self.fbx_folder)
-                                material_component.LoadShaderTexture(mesh_name, mat_name, shader_texture, tex_path)
+                        # Custom shader parameters
+                        shader_params = material_component.GetShaderParameterNames(mesh_name, mat_name)
+                        for param in shader_params:
+                            json_value = get_shader_var(mat_json, param)
+                            if json_value is not None:
+                                material_component.SetShaderParameter(mesh_name, mat_name, param, json_value)
                             self.update_custom_progress(1, pid)
 
-                    # Pbr Textures
-                    for tex_id in TEXTURE_MAPS.keys():
-                        tex_channel = TEXTURE_MAPS[tex_id][0]
-                        is_substance = TEXTURE_MAPS[tex_id][1]
-                        if self.mat_duplicates[mat_name]: # fully process textures for materials with duplicates,
-                            is_substance = False          # as the substance texture import can't really deal with them.
-                        if not self.substance_import_success: # or if the substance texture import method failed
-                            is_substance = False              # import all textures individually
-                        tex_info = get_pbr_texture_info(mat_json, tex_id)
-                        if tex_info and tex_info["Texture Path"] and tex_info["Texture Path"] != "":
-                            tex_path = convert_texture_path(tex_info, self.fbx_folder)
-                            strength = float(tex_info["Strength"]) * 0.01
-                            offset = tex_info["Offset"]
-                            offset_vector = RLPy.RVector2(float(offset[0]), float(offset[1]))
-                            tiling = tex_info["Tiling"]
-                            tiling_vector = RLPy.RVector2(float(tiling[0]), float(tiling[1]))
-                            # Note: rotation doesn't seem to be exported to the Json?
-                            rotation = float(0.0)
-                            if "Rotation" in tex_info.keys():
-                                rotation = float(tex_info["Rotation"])
-                            # set textures
-                            if os.path.exists(tex_path):
-                                if not is_substance:
-                                    material_component.LoadImageToTexture(mesh_name, mat_name, tex_channel, tex_path)
-                                material_component.AddUvDataKey(key_zero, mesh_name, mat_name, tex_channel, offset_vector, tiling_vector, rotation)
-                                material_component.AddTextureWeightKey(key_zero, mesh_name, mat_name, tex_channel, strength)
-                        self.update_custom_progress(1, pid)
+                        # Custom shader textures
+                        shader_textures = material_component.GetShaderTextureNames(mesh_name, mat_name)
+                        if shader_textures:
+                            for shader_texture in shader_textures:
+                                tex_info = get_shader_texture_info(mat_json, shader_texture)
+                                if tex_info:
+                                    tex_path = convert_texture_path(tex_info, self.fbx_folder)
+                                    material_component.LoadShaderTexture(mesh_name, mat_name, shader_texture, tex_path)
+                                self.update_custom_progress(1, pid)
+
+                        # Pbr Textures
+                        for tex_id in TEXTURE_MAPS.keys():
+                            tex_channel = TEXTURE_MAPS[tex_id][0]
+                            is_substance = TEXTURE_MAPS[tex_id][1]
+                            if self.mat_duplicates[mat_name]: # fully process textures for materials with duplicates,
+                                is_substance = False          # as the substance texture import can't really deal with them.
+                            if not self.substance_import_success: # or if the substance texture import method failed
+                                is_substance = False              # import all textures individually
+                            tex_info = get_pbr_texture_info(mat_json, tex_id)
+                            if tex_info and tex_info["Texture Path"] and tex_info["Texture Path"] != "":
+                                tex_path = convert_texture_path(tex_info, self.fbx_folder)
+                                strength = float(tex_info["Strength"]) * 0.01
+                                offset = tex_info["Offset"]
+                                offset_vector = RLPy.RVector2(float(offset[0]), float(offset[1]))
+                                tiling = tex_info["Tiling"]
+                                tiling_vector = RLPy.RVector2(float(tiling[0]), float(tiling[1]))
+                                # Note: rotation doesn't seem to be exported to the Json?
+                                rotation = float(0.0)
+                                if "Rotation" in tex_info.keys():
+                                    rotation = float(tex_info["Rotation"])
+                                # set textures
+                                if os.path.exists(tex_path):
+                                    if not is_substance:
+                                        material_component.LoadImageToTexture(mesh_name, mat_name, tex_channel, tex_path)
+                                    material_component.AddUvDataKey(key_zero, mesh_name, mat_name, tex_channel, offset_vector, tiling_vector, rotation)
+                                    material_component.AddTextureWeightKey(key_zero, mesh_name, mat_name, tex_channel, strength)
+                            self.update_custom_progress(1, pid)
 
             self.update_custom_progress(2)
 
@@ -379,57 +380,24 @@ class Importer:
         for mesh_name in mesh_names:
             mesh_json_name = fix_name(mesh_name)
             obj_json = get_object_json(char_json, mesh_json_name)
-            mat_names = material_component.GetMaterialNames(mesh_name)
+            if obj_json:
+                mat_names = material_component.GetMaterialNames(mesh_name)
 
-            if mesh_name.startswith("CC_Base_Body"):
-                # body is a special case, everything is stored in the first material name with incremental indicees
+                if mesh_name.startswith("CC_Base_Body"):
+                    # body is a special case, everything is stored in the first material name with incremental indicees
 
-                # create folder with first matertial name in each mesh
-                first_mat_in_mesh = mat_names[0]
-                mesh_folder = os.path.join(temp_folder, first_mat_in_mesh)
-                os.mkdir(mesh_folder)
+                    # create folder with first matertial name in each mesh
+                    first_mat_in_mesh = mat_names[0]
+                    mesh_folder = os.path.join(temp_folder, first_mat_in_mesh)
+                    os.mkdir(mesh_folder)
 
-                mat_index = 1001
+                    mat_index = 1001
 
-                for mat_name in mat_names:
-                    mat_json_name = fix_name(mat_name)
-                    mat_json = get_material_json(obj_json, mat_json_name)
-                    if mat_json:
-                        pid = mesh_name + " / " + mat_name
-                        for tex_id in TEXTURE_MAPS.keys():
-                            is_substance = TEXTURE_MAPS[tex_id][1]
-                            if is_substance:
-                                tex_channel = TEXTURE_MAPS[tex_id][0]
-                                substance_postfix = TEXTURE_MAPS[tex_id][2]
-                                tex_info = get_pbr_texture_info(mat_json, tex_id)
-                                if tex_info and tex_info["Texture Path"] and tex_info["Texture Path"] != "":
-                                    tex_path = convert_texture_path(tex_info, self.fbx_folder)
-                                    tex_dir, tex_file = os.path.split(tex_path)
-                                    tex_name, tex_type = os.path.splitext(tex_file)
-                                    if os.path.exists(tex_path):
-                                        substance_name = first_mat_in_mesh + "_" + str(mat_index) + "_" + substance_postfix + tex_type
-                                        substance_path = os.path.join(mesh_folder, substance_name)
-                                        shutil.copyfile(tex_path, substance_path)
-                                self.update_pbr_progress(2, pid)
-                    mat_index += 1
-
-            else:
-
-                for mat_name in mat_names:
-
-                    pid = mesh_name + " / " + mat_name
-
-                    if not self.mat_duplicates[mat_name]: # only process those materials here that don't have duplicates
+                    for mat_name in mat_names:
                         mat_json_name = fix_name(mat_name)
                         mat_json = get_material_json(obj_json, mat_json_name)
                         if mat_json:
-
-                            # create folder with the matertial name
-                            mesh_folder = os.path.join(temp_folder, mat_name)
-                            os.mkdir(mesh_folder)
-
-                            mat_index = 1001
-
+                            pid = mesh_name + " / " + mat_name
                             for tex_id in TEXTURE_MAPS.keys():
                                 is_substance = TEXTURE_MAPS[tex_id][1]
                                 if is_substance:
@@ -441,13 +409,47 @@ class Importer:
                                         tex_dir, tex_file = os.path.split(tex_path)
                                         tex_name, tex_type = os.path.splitext(tex_file)
                                         if os.path.exists(tex_path):
-                                            substance_name = mat_name + "_" + str(mat_index) + "_" + substance_postfix + tex_type
+                                            substance_name = first_mat_in_mesh + "_" + str(mat_index) + "_" + substance_postfix + tex_type
                                             substance_path = os.path.join(mesh_folder, substance_name)
                                             shutil.copyfile(tex_path, substance_path)
                                     self.update_pbr_progress(2, pid)
-                    else:
-                        self.count_pbr += (NUM_SUBSTANCE_MAPS - 1)
-                        self.update_pbr_progress(2, pid)
+                        mat_index += 1
+
+                else:
+
+                    for mat_name in mat_names:
+
+                        pid = mesh_name + " / " + mat_name
+
+                        if not self.mat_duplicates[mat_name]: # only process those materials here that don't have duplicates
+                            mat_json_name = fix_name(mat_name)
+                            mat_json = get_material_json(obj_json, mat_json_name)
+                            if mat_json:
+
+                                # create folder with the matertial name
+                                mesh_folder = os.path.join(temp_folder, mat_name)
+                                os.mkdir(mesh_folder)
+
+                                mat_index = 1001
+
+                                for tex_id in TEXTURE_MAPS.keys():
+                                    is_substance = TEXTURE_MAPS[tex_id][1]
+                                    if is_substance:
+                                        tex_channel = TEXTURE_MAPS[tex_id][0]
+                                        substance_postfix = TEXTURE_MAPS[tex_id][2]
+                                        tex_info = get_pbr_texture_info(mat_json, tex_id)
+                                        if tex_info and tex_info["Texture Path"] and tex_info["Texture Path"] != "":
+                                            tex_path = convert_texture_path(tex_info, self.fbx_folder)
+                                            tex_dir, tex_file = os.path.split(tex_path)
+                                            tex_name, tex_type = os.path.splitext(tex_file)
+                                            if os.path.exists(tex_path):
+                                                substance_name = mat_name + "_" + str(mat_index) + "_" + substance_postfix + tex_type
+                                                substance_path = os.path.join(mesh_folder, substance_name)
+                                                shutil.copyfile(tex_path, substance_path)
+                                        self.update_pbr_progress(2, pid)
+                        else:
+                            self.count_pbr += (NUM_SUBSTANCE_MAPS - 1)
+                            self.update_pbr_progress(2, pid)
 
         self.update_pbr_progress(3)
         avatar = self.avatar
@@ -483,34 +485,36 @@ class Importer:
 
         for mesh_name in mesh_names:
             obj_json = get_object_json(char_json, mesh_name)
-            mat_names = material_component.GetMaterialNames(mesh_name)
-            for mat_name in mat_names:
-                mat_json = get_material_json(obj_json, mat_name)
-                # determine material duplicates
-                if mat_name in self.mat_duplicates.keys():
-                    self.mat_duplicates[mat_name] = True
-                else:
-                    self.mat_duplicates[mat_name] = False
-                # ensure the shader is correct:
-                imported_shader = material_component.GetShader(mesh_name, mat_name)
-                wanted_shader = SHADER_MAPS[mat_json["Material Type"]]
-                if "Custom Shader" in mat_json.keys():
-                    wanted_shader = SHADER_MAPS[mat_json["Custom Shader"]["Shader Name"]]
-                if imported_shader != wanted_shader:
-                    material_component.SetShader(mesh_name, mat_name, "PBR")
-                    material_component.SetShader(mesh_name, mat_name, wanted_shader)
+            if obj_json:
+                mat_names = material_component.GetMaterialNames(mesh_name)
+                for mat_name in mat_names:
+                    mat_json = get_material_json(obj_json, mat_name)
+                    if mat_json:
+                        # determine material duplicates
+                        if mat_name in self.mat_duplicates.keys():
+                            self.mat_duplicates[mat_name] = True
+                        else:
+                            self.mat_duplicates[mat_name] = False
+                        # ensure the shader is correct:
+                        imported_shader = material_component.GetShader(mesh_name, mat_name)
+                        wanted_shader = SHADER_MAPS[mat_json["Material Type"]]
+                        if "Custom Shader" in mat_json.keys():
+                            wanted_shader = SHADER_MAPS[mat_json["Custom Shader"]["Shader Name"]]
+                        if imported_shader != wanted_shader:
+                            material_component.SetShader(mesh_name, mat_name, "PBR")
+                            material_component.SetShader(mesh_name, mat_name, wanted_shader)
 
-                # Calculate stats
-                num_pbr += NUM_SUBSTANCE_MAPS
-                num_materials += 1
-                # Custom shader parameters
-                shader_params = material_component.GetShaderParameterNames(mesh_name, mat_name)
-                num_params += len(shader_params)
-                # Custom shader textures
-                shader_textures = material_component.GetShaderTextureNames(mesh_name, mat_name)
-                num_textures += len(shader_textures)
-                # Pbr Textures
-                num_textures += len(TEXTURE_MAPS)
+                        # Calculate stats
+                        num_pbr += NUM_SUBSTANCE_MAPS
+                        num_materials += 1
+                        # Custom shader parameters
+                        shader_params = material_component.GetShaderParameterNames(mesh_name, mat_name)
+                        num_params += len(shader_params)
+                        # Custom shader textures
+                        shader_textures = material_component.GetShaderTextureNames(mesh_name, mat_name)
+                        num_textures += len(shader_textures)
+                        # Pbr Textures
+                        num_textures += len(TEXTURE_MAPS)
 
         self.num_pbr = num_pbr
         self.num_custom = num_params + num_textures
