@@ -131,6 +131,28 @@ class Importer:
         self.avatar = None
 
 
+    def clean_up(self):
+        if self.window:
+            self.window.Close()
+        self.fbx_path = "C:/folder/dummy.fbx"
+        self.fbx_folder = "C:/folder"
+        self.fbx_file = "dummy.fbx"
+        self.fbx_name = "dummy"
+        self.json_path = "C:/folder/dummy.json"
+        self.json_data = None
+        self.avatar = None
+        self.window = None
+        self.dock = None
+        self.prog1 = None
+        self.prog2 = None
+        self.num_pbr = 0
+        self.num_custom = 0
+        self.count_pbr = 0
+        self.count_custom = 0
+        self.mat_duplicates = {}
+        self.substance_import_success = False
+
+
     def create_window(self):
         window = RLPy.RUi.CreateRDockWidget()
         window.SetWindowTitle("Blender Auto-setup Character Import")
@@ -159,11 +181,11 @@ class Importer:
         labelp1.setText("First Pass: (Pbr Textures)")
         layout.addWidget(labelp1)
 
-        self.prog1 = QtWidgets.QProgressBar()
-        self.prog1.setRange(0, 100)
-        self.prog1.setValue(0)
-        self.prog1.setFormat("Calculating...")
-        layout.addWidget(self.prog1)
+        prog1 = QtWidgets.QProgressBar()
+        prog1.setRange(0, 100)
+        prog1.setValue(0)
+        prog1.setFormat("Calculating...")
+        layout.addWidget(prog1)
 
         layout.addSpacing(10)
 
@@ -171,14 +193,17 @@ class Importer:
         labelp2.setText("Second Pass: (Custom Shader Textures and Parameters)")
         layout.addWidget(labelp2)
 
-        self.prog2 = QtWidgets.QProgressBar()
-        self.prog2.setRange(0, 100)
-        self.prog2.setValue(0)
-        self.prog2.setFormat("Waiting...")
-        layout.addWidget(self.prog2)
+        prog2 = QtWidgets.QProgressBar()
+        prog2.setRange(0, 100)
+        prog2.setValue(0)
+        prog2.setFormat("Waiting...")
+        layout.addWidget(prog2)
 
         window.Show()
         self.window = window
+        self.dock = dock
+        self.prog1 = prog1
+        self.prog2 = prog2
 
 
     def update_pbr_progress(self, stage, text = ""):
@@ -222,11 +247,14 @@ class Importer:
             if RLPy.RFileIO.LoadFile(self.fbx_path) == RLPy.RStatus.Success:
                 avatars = RLPy.RScene.GetAvatars(RLPy.EAvatarType_All)
                 if len(avatars) > 0:
-                    self.avatar = avatars[0]
-                    self.create_window()
-                    self.rebuild_materials()
-                    time.sleep(2)
-                    self.window.Close()
+                    try:
+                        self.avatar = avatars[0]
+                        self.create_window()
+                        self.rebuild_materials()
+                        time.sleep(2)
+                    except Exception as e:
+                        print(e)
+        self.clean_up()
 
 
     def rebuild_materials(self):

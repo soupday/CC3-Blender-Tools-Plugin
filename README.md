@@ -6,6 +6,8 @@ This plugin will re-import the selected character and reconstruct the materials 
 
 The character export from Blender must be generated with the **CC3 Blender Tools** add-on as the Fbx export must be carefully altered to be compliant with CC3 and having exactly matching Object and Material names with the FbxKey, and also must have all relevent texture paths updated and changes to the material parameters written back to the exported Json data.
 
+It is possible to include additional objects with the character exports from Blender by selecting them along with the character, but they must be parented to the character armature and have an armature modifier with valid vertex weights, otherwise CC3 will ignore them.
+
 ## Installation
 - Clone or download the CC3 Blender Tools Plugin GitHub.
 - Create the folder **OpenPlugin** in the Character Creator 3 install directory **\Bin64\OpenPlugin**
@@ -27,3 +29,5 @@ Currently Subsurface scattering settings (Falloff color and Scattering Radius) f
 Likewise Displacement map tessellation settings also cannot be re-applied and are reset to defaults.
 
 Some older characters import with the upper and lower teeth at odd angles. Replacing the teeth in CC3 will fix the issue. Alternatively there is an export option to reset the bone roll to zero on the upper and lower teeth bones. This appears to fix the problem but it is unknown if these changes to the teeth bones will cause further problems later.
+
+There is a very strange problem where if the object has a very small number of vertices and faces (< 100) then the import into CC3 becomes very unstable and can cause a crash to desktop, even if that object was originally exported with the character from CC3.
