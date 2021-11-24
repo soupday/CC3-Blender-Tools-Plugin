@@ -22,7 +22,10 @@ By default the FBX export settings have embed textures switched on, but this mak
 
 **Always turn off embed textures.**
 
-Information lost on re-importing:
+### Information lost on re-importing
+
+Not all of the original character data can be restored when re-importing the character from Blender.
+
 - Hidden faces information for clothing and accessories is lost upon re-importing into CC3.
 - Currently Subsurface scattering settings (Falloff color and Scattering Radius) for skin, eyes teeth and tongue cannot be re-applied as there is no Python interface to do so, so these settings will be reset to their defaults.
 - Likewise Displacement map tessellation settings also cannot be re-applied and are reset to defaults.
