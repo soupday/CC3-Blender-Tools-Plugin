@@ -22,14 +22,14 @@ By default the FBX export settings have embed textures switched on, but this mak
 
 **Always turn off embed textures.**
 
-Hidden faces information for clothing and accessories is lost upon re-importing into CC3.
+Information lost on re-importing:
+- Hidden faces information for clothing and accessories is lost upon re-importing into CC3.
+- Currently Subsurface scattering settings (Falloff color and Scattering Radius) for skin, eyes teeth and tongue cannot be re-applied as there is no Python interface to do so, so these settings will be reset to their defaults.
+- Likewise Displacement map tessellation settings also cannot be re-applied and are reset to defaults.
+- The PhysX weight map texture and physics settings information is also lost on re-import. The weightmap textures are in the texture files exported from CC3 so they can be restored by hand in PhysX material settings.
 
-Currently Subsurface scattering settings (Falloff color and Scattering Radius) for skin, eyes teeth and tongue cannot be re-applied as there is no Python interface to do so, so these settings will be reset to their defaults.
+### Possible Issues
 
-Likewise Displacement map tessellation settings also cannot be re-applied and are reset to defaults.
-
-As there are no Python functions to restore the weight maps and physics settings, then PhysX weight map information is also lost on re-import. The weightmap textures are in the texture files exported from CC3 so they can be restored by hand in PhysX material settings.
-
-Some older characters import with the upper and lower teeth at odd angles. Replacing the teeth in CC3 will fix the issue. Alternatively there is an export option to reset the bone roll to zero on the upper and lower teeth bones. This appears to fix the problem but it is unknown if these changes to the teeth bones will cause further problems later.
-
-There is a very strange problem where if the object has a very small number of vertices and faces (< 100) then the import into CC3 becomes very unstable and can cause a crash to desktop, even if that object was originally exported with the character from CC3.
+These two issues can be difficult to reproduce and so might not be a problem at all, just something to keep in mind if something does go wrong:
+- Some older characters import with the upper and lower teeth at odd angles. Replacing the teeth in CC3 will fix the issue. Alternatively there is an export option to reset the bone roll to zero on the upper and lower teeth bones. This appears to fix the problem but it is unknown if these changes to the teeth bones will cause further problems later.
+- There is a very strange problem where if the object has a very small number of vertices and faces (< 100) then the import into CC3 becomes very unstable and can cause a crash to desktop, even if that object was originally exported with the character from CC3.
