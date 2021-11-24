@@ -24,9 +24,11 @@ By default the FBX export settings have embed textures switched on, but this mak
 
 Hidden faces information for clothing and accessories is lost upon re-importing into CC3.
 
-Currently Subsurface scattering settings (Falloff color and Scattering Radius) for skin, eyes teeth and tongue cannot be re-applied as there is no python interface to do so, so these settings will be reset to their defaults.
+Currently Subsurface scattering settings (Falloff color and Scattering Radius) for skin, eyes teeth and tongue cannot be re-applied as there is no Python interface to do so, so these settings will be reset to their defaults.
 
 Likewise Displacement map tessellation settings also cannot be re-applied and are reset to defaults.
+
+As there are no Python functions to restore the weight maps and physics settings, then PhysX weight map information is also lost on re-import. The weightmap textures are in the texture files exported from CC3 so they can be restored by hand in PhysX material settings.
 
 Some older characters import with the upper and lower teeth at odd angles. Replacing the teeth in CC3 will fix the issue. Alternatively there is an export option to reset the bone roll to zero on the upper and lower teeth bones. This appears to fix the problem but it is unknown if these changes to the teeth bones will cause further problems later.
 
