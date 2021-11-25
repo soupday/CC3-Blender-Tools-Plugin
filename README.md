@@ -8,6 +8,14 @@ The character export from Blender must be generated with the **CC3 Blender Tools
 
 It is possible to include additional objects with the character exports from Blender by selecting them along with the character, but they must be parented to the character armature and have an armature modifier with valid vertex weights, otherwise CC3 will ignore them.
 
+## Demo Videos
+
+1st Demo Video: https://youtu.be/gRhbcTSt118
+(Mesh editing and material parameters)
+
+2nd Demo Video: https://youtu.be/T4ZU1EmJya0
+(Using material nodes to modify textures during export)
+
 ## Installation
 - Clone or download the CC3 Blender Tools Plugin GitHub.
 - Create the folder **OpenPlugin** in the Character Creator 3 install directory **\Bin64\OpenPlugin**
