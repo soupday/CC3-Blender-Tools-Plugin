@@ -19,7 +19,7 @@ It is possible to include additional objects with the character exports from Ble
 ## Installation
 - Download the Zip file (__CC3-Blender-Tools-Plugin-main.zip__) from the **Code** button.
 - Unzip the zip file. There should be a folder: **CC3-Blender-Tools-Plugin-main**
-- Create the folder **OpenPlugin** in the <__Character Creator 3 install directory__>**\Bin64\OpenPlugin**
+- Create the folder **OpenPlugin** in the <Character Creator 3 install directory>**\Bin64\OpenPlugin**
     - e.g: **C:\Program Files\Reallusion\Character Creator 3\Bin64\OpenPlugin**
 - Copy or move the folder CC3-Blender-Tools-Plugin-main into the **OpenPlugin** folder.
     - e.g: **C:\Program Files\Reallusion\Character Creator 3\Bin64\OpenPlugin\CC3-Blender-Tools-Plugin-main**
