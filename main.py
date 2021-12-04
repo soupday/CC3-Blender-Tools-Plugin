@@ -88,6 +88,9 @@ def initialize_plugin():
     menu_import_action = plugin_menu.addAction("Import From Blender")
     menu_import_action.triggered.connect(menu_import)
 
+    #menu_import_action = plugin_menu.addAction("Export to Blender")
+    #menu_import_action.triggered.connect(menu_export)
+
 
 FBX_IMPORTER = None
 
@@ -100,6 +103,39 @@ def menu_import():
     if file_path and file_path != "":
         # keep hold of this instance, otherwise it is destroyed when this function ends...
         FBX_IMPORTER = Importer(file_path)
+
+
+def menu_export():
+    # RO::RFileIO::ExportFbxFile(RO::RIObjectPtr, std::wstring const &, RO::EExportFbxOptions, RO::EExportFbxOptions2, RO::EExportFbxOptions3, RO::EExportTextureSize, RO::EExportTextureFormat, std::wstring const &)
+    # RO::RFileIO::ExportFbxFile(RO::RIObjectPtr, std::wstring const &, RO::EExportFbxOptions, RO::EExportFbxOptions2, RO::EExportFbxOptions3, RO::EExportTextureSize, RO::EExportTextureFormat)
+    # RO::RFileIO::ExportFbxFile(RO::RIObjectPtr, std::wstring const &, RO::EExportFbxOptions, RO::EExportFbxOptions2, RO::EExportFbxOptions3, RO::EExportTextureSize)
+    # RO::RFileIO::ExportFbxFile(RO::RIObjectPtr, std::wstring const &, RO::EExportFbxOptions, RO::EExportFbxOptions2, RO::EExportFbxOptions3 )
+
+    # Note: With no RLPy.EExportFbxOptions2_PresetBlender, the ExportFbxFile function does not generate a valid Json file for Blender
+
+    path = "F:\\RLTEST\\test-rlout.fbx"
+
+    options1 = (RLPy.EExportFbxOptions__None +
+                RLPy.EExportFbxOptions_FbxKey +
+                RLPy.EExportFbxOptions_AutoSkinRigidMesh +
+                RLPy.EExportFbxOptions_RemoveAllUnused +
+                RLPy.EExportFbxOptions_ExportPbrTextureAsImageInFormatDirectory)
+
+    options2 = (RLPy.EExportFbxOptions2__None +
+                RLPy.EExportFbxOptions2_ResetBoneScale +
+                RLPy.EExportFbxOptions2_ResetSelfillumination)
+
+    options3 = (RLPy.EExportFbxOptions3__None +
+                RLPy.EExportFbxOptions3_ExportJson +
+                RLPy.EExportFbxOptions3_ExportVertexColor)
+
+    avatar = RLPy.RScene.GetAvatars(RLPy.EAvatarType_All)[0]
+
+    RLPy.RFileIO.ExportFbxFile(avatar, path, options1, options2, options3,
+                                RLPy.EExportTextureSize_Original,
+                                RLPy.EExportTextureFormat_Default)
+
+    return
 
 
 def clean_up_globals():
@@ -743,6 +779,8 @@ def convert_texture_path(tex_info, folder):
     """Get the Json texture path relative to the import character file.
     """
     rel_path = tex_info["Texture Path"]
+    if os.path.isabs(rel_path):
+        return os.path.normpath(rel_path)
     return os.path.join(folder, rel_path)
 
 
