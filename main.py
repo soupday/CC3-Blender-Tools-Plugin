@@ -24,6 +24,7 @@ from PySide2 import *
 from PySide2.shiboken2 import wrapInstance
 from enum import IntEnum
 
+VERSION = "1.0.4"
 
 class TextureChannel(IntEnum):
     METALLIC      = 0
@@ -66,11 +67,11 @@ TEXTURE_MAPS = { # { "json_channel_name": [RL_Texture_Channel, is_Substance_Pain
     "Displacement": [RLPy.EMaterialTextureChannel_Displacement, True, "displacement"],
     "Opacity": [RLPy.EMaterialTextureChannel_Opacity, True, "opacity"],
     "Blend": [RLPy.EMaterialTextureChannel_DiffuseBlend, False, ""],
-    "Bump": [RLPy.EMaterialTextureChannel_Bump, True, "bump"],
     "Reflection": [RLPy.EMaterialTextureChannel_Reflection, False, ""],
     "Refraction": [RLPy.EMaterialTextureChannel_Refraction, False, ""],
     "Cube": [RLPy.EMaterialTextureChannel_Cube, False, ""],
     "AO": [RLPy.EMaterialTextureChannel_AmbientOcclusion, True, "ao"],
+    "Bump": [RLPy.EMaterialTextureChannel_Bump, True, "bump"],
     "Normal": [RLPy.EMaterialTextureChannel_Normal, True, "normal"],
 }
 
@@ -151,6 +152,7 @@ class Importer:
     fbx_path = "C:/folder/dummy.fbx"
     fbx_folder = "C:/folder"
     fbx_file = "dummy.fbx"
+    fbx_key = "C:/folder/dummy.fbxkey"
     fbx_name = "dummy"
     json_path = "C:/folder/dummy.json"
     json_data = None
@@ -180,8 +182,20 @@ class Importer:
         self.fbx_file = os.path.basename(self.fbx_path)
         self.fbx_folder = os.path.dirname(self.fbx_path)
         self.fbx_name = os.path.splitext(self.fbx_file)[0]
+        self.fbx_key = os.path.join(self.fbx_folder, self.fbx_name + ".fbxkey")
         self.json_path = os.path.join(self.fbx_folder, self.fbx_name + ".json")
-        self.create_options_window()
+        self.json_data = read_json(self.json_path)
+
+        error = False
+        if not self.json_data:
+            message_box("There is no JSON data with this character!\n\nCharacters must be exported from CC3.44.4709.1 or greater to generate compatible JSON data on exports.")
+            error = True
+        if not os.path.exists(self.fbx_key):
+            message_box("There is no Fbx Key with this character!\n\nCharacters cannot be imported back into Character Creator without a corresponding Fbx Key.\nThe Fbx Key will be generated when the character is exported as Mesh only, or in Calibration Pose, and with no hidden faces.")
+            error = True
+
+        if not error:
+            self.create_options_window()
 
 
     def close_options_window(self):
@@ -369,7 +383,6 @@ class Importer:
         """Import the character into CC3 and read in the json data.
         """
         self.close_options_window()
-        self.json_data = read_json(self.json_path)
         if self.json_data:
             if self.import_mesh:
                 RLPy.RFileIO.LoadFile(self.fbx_path)
