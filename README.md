@@ -65,6 +65,11 @@ These two issues can be difficult to reproduce and so might not be a problem at 
 
 ## Changelog
 
+### 1.0.5
+- Fixed long path names causing textures to fail to load.
+- Fix for empty texture paths.
+- Fixed Diffuse maps with Alpha channels not applying Opacity channel on import.
+
 ### 1.0.4
 - Fixed AO Maps causing Bump maps to import with zero strength.
 - Added Fbx Key check and warning message box.

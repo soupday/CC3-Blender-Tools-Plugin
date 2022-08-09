@@ -24,7 +24,7 @@ from PySide2 import *
 from PySide2.shiboken2 import wrapInstance
 from enum import IntEnum
 
-VERSION = "1.0.4"
+VERSION = "1.0.5"
 
 class TextureChannel(IntEnum):
     METALLIC      = 0
@@ -238,7 +238,7 @@ class Importer:
 
     def create_options_window(self):
         window = RLPy.RUi.CreateRDockWidget()
-        window.SetWindowTitle("Blender Auto-setup Character Import - Options")
+        window.SetWindowTitle(f"Blender Auto-setup Character Import ({VERSION}) - Options")
 
         dock = wrapInstance(int(window.GetWindow()), QtWidgets.QDockWidget)
         dock.setFixedWidth(500)
@@ -486,29 +486,42 @@ class Importer:
                                     material_component.SetShaderParameter(mesh_name, mat_name, param, json_value)
                                 self.update_custom_progress(1, pid)
 
-                        if self.import_textures:
+                        if self.import_textures and "Textures" in mat_json.keys():
+
                             # Custom shader textures
                             shader_textures = material_component.GetShaderTextureNames(mesh_name, mat_name)
                             if shader_textures:
                                 for shader_texture in shader_textures:
                                     tex_info = get_shader_texture_info(mat_json, shader_texture)
-                                    if tex_info:
-                                        tex_path = convert_texture_path(tex_info, self.fbx_folder)
+                                    tex_path = convert_texture_path(tex_info, "Texture Path", self.fbx_folder)
+                                    if tex_path and os.path.exists(tex_path) and os.path.isfile(tex_path):
                                         material_component.LoadShaderTexture(mesh_name, mat_name, shader_texture, tex_path)
                                     self.update_custom_progress(1, pid)
 
                             # Pbr Textures
+                            png_base_color = False
+                            has_opacity_map = "Opacity" in mat_json["Textures"].keys()
                             for tex_id in TEXTURE_MAPS.keys():
                                 tex_channel = TEXTURE_MAPS[tex_id][0]
                                 is_substance = TEXTURE_MAPS[tex_id][1]
-                                if self.mat_duplicates[mat_name]: # fully process textures for materials with duplicates,
-                                    is_substance = False          # as the substance texture import can't really deal with them.
-                                if not self.substance_import_success: # or if the substance texture import method failed
-                                    is_substance = False              # import all textures individually
+                                load_texture = not is_substance
+                                # fully process textures for materials with duplicates,
+                                # as the substance texture import can't really deal with them.
+                                if self.mat_duplicates[mat_name]:
+                                    load_texture = True
+                                # or if the substance texture import method failed, import all textures individually
+                                if not self.substance_import_success:
+                                    load_texture = True
                                 tex_info = get_pbr_texture_info(mat_json, tex_id)
-                                if tex_info and tex_info["Texture Path"] and tex_info["Texture Path"] != "":
-                                    tex_path = convert_texture_path(tex_info, self.fbx_folder)
-                                    strength = float(tex_info["Strength"]) * 0.01
+                                tex_path = convert_texture_path(tex_info, "Texture Path", self.fbx_folder)
+                                if tex_path:
+                                    # PNG diffuse maps with alpha channels don't fill in opacity correctly with substance import method
+                                    if tex_id == "Base Color" and not has_opacity_map and os.path.splitext(tex_path)[-1].lower() == ".png":
+                                        png_base_color = True
+                                        load_texture = True
+                                    elif tex_id == "Opacity" and png_base_color:
+                                        load_texture = True
+                                    strength = float(tex_info["Strength"]) / 100.0
                                     offset = tex_info["Offset"]
                                     offset_vector = RLPy.RVector2(float(offset[0]), float(offset[1]))
                                     tiling = tex_info["Tiling"]
@@ -518,11 +531,12 @@ class Importer:
                                     if "Rotation" in tex_info.keys():
                                         rotation = float(tex_info["Rotation"])
                                     # set textures
-                                    if os.path.exists(tex_path):
-                                        if not is_substance:
+                                    if os.path.exists(tex_path) and os.path.isfile(tex_path):
+                                        if load_texture:
                                             material_component.LoadImageToTexture(mesh_name, mat_name, tex_channel, tex_path)
                                         material_component.AddUvDataKey(key_zero, mesh_name, mat_name, tex_channel, offset_vector, tiling_vector, rotation)
                                         material_component.AddTextureWeightKey(key_zero, mesh_name, mat_name, tex_channel, strength)
+                                        twl = material_component.GetTextureWeights(mesh_name, mat_name)
                                 self.update_custom_progress(1, pid)
 
             self.update_custom_progress(2)
@@ -558,7 +572,8 @@ class Importer:
         if os.path.exists(temp_folder):
             shutil.rmtree(temp_folder)
         # make a new temporary folder
-        os.mkdir(temp_folder)
+        if not os.path.exists(temp_folder):
+            os.mkdir(temp_folder)
 
         for mesh_name in mesh_names:
 
@@ -575,7 +590,8 @@ class Importer:
                     # create folder with first matertial name in each mesh
                     first_mat_in_mesh = mat_names[0]
                     mesh_folder = os.path.join(temp_folder, first_mat_in_mesh)
-                    os.mkdir(mesh_folder)
+                    if not os.path.exists(mesh_folder):
+                        os.mkdir(mesh_folder)
 
                     mat_index = 1001
 
@@ -595,15 +611,15 @@ class Importer:
                                     tex_channel = TEXTURE_MAPS[tex_id][0]
                                     substance_postfix = TEXTURE_MAPS[tex_id][2]
                                     tex_info = get_pbr_texture_info(mat_json, tex_id)
-                                    if tex_info and tex_info["Texture Path"] and tex_info["Texture Path"] != "":
-                                        tex_path = convert_texture_path(tex_info, self.fbx_folder)
+                                    tex_path = convert_texture_path(tex_info, "Texture Path", self.fbx_folder)
+                                    if tex_path:
                                         tex_dir, tex_file = os.path.split(tex_path)
                                         tex_name, tex_type = os.path.splitext(tex_file)
                                         # copy valid texture files to the temporary texture cache
-                                        if os.path.exists(tex_path):
+                                        if tex_name and os.path.exists(tex_path) and os.path.isfile(tex_path):
                                             substance_name = first_mat_in_mesh + "_" + str(mat_index) + "_" + substance_postfix + tex_type
-                                            substance_path = os.path.join(mesh_folder, substance_name)
-                                            shutil.copyfile(tex_path, substance_path)
+                                            substance_path = os.path.normpath(os.path.join(mesh_folder, substance_name))
+                                            shutil.copyfile("\\\\?\\" + tex_path, "\\\\?\\" + substance_path)
 
                                     self.update_pbr_progress(2, pid)
 
@@ -630,7 +646,8 @@ class Importer:
 
                                 # create folder with the matertial name
                                 mesh_folder = os.path.join(temp_folder, mat_name)
-                                os.mkdir(mesh_folder)
+                                if not os.path.exists(mesh_folder):
+                                    os.mkdir(mesh_folder)
 
                                 mat_index = 1001
 
@@ -641,15 +658,15 @@ class Importer:
                                         tex_channel = TEXTURE_MAPS[tex_id][0]
                                         substance_postfix = TEXTURE_MAPS[tex_id][2]
                                         tex_info = get_pbr_texture_info(mat_json, tex_id)
-                                        if tex_info and tex_info["Texture Path"] and tex_info["Texture Path"] != "":
-                                            tex_path = convert_texture_path(tex_info, self.fbx_folder)
+                                        tex_path = convert_texture_path(tex_info, "Texture Path", self.fbx_folder)
+                                        if tex_path:
                                             tex_dir, tex_file = os.path.split(tex_path)
                                             tex_name, tex_type = os.path.splitext(tex_file)
                                             # copy valid texture files to the temporary texture cache
-                                            if os.path.exists(tex_path):
+                                            if tex_name and os.path.exists(tex_path) and os.path.isfile(tex_path):
                                                 substance_name = mat_name + "_" + str(mat_index) + "_" + substance_postfix + tex_type
-                                                substance_path = os.path.join(mesh_folder, substance_name)
-                                                shutil.copyfile(tex_path, substance_path)
+                                                substance_path = os.path.normpath(os.path.join(mesh_folder, substance_name))
+                                                shutil.copyfile("\\\\?\\" + tex_path, "\\\\?\\" + substance_path)
 
                                         self.update_pbr_progress(2, pid)
 
@@ -788,13 +805,15 @@ def fix_blender_name(name: str, import_mesh):
     return name
 
 
-def convert_texture_path(tex_info, folder):
+def convert_texture_path(tex_info, var_name, folder):
     """Get the Json texture path relative to the import character file.
     """
-    rel_path = tex_info["Texture Path"]
-    if os.path.isabs(rel_path):
-        return os.path.normpath(rel_path)
-    return os.path.join(folder, rel_path)
+    if tex_info and var_name in tex_info.keys():
+        rel_path = tex_info[var_name]
+        if os.path.isabs(rel_path):
+            return os.path.normpath(rel_path)
+        return os.path.normpath(os.path.join(folder, rel_path))
+    return None
 
 
 def get_json_mesh_name_map(avatar):
