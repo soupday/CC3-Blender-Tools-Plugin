@@ -1,4 +1,7 @@
-# CC3 Blender Tools Plugin
+# CC3 Blender Tools Plugin (Installed in CC3)
+
+**This plugin is for Character Creator 3, for Character Creator 4 [look here](https://github.com/soupday/CC4-Blender-Tools-Plugin)**
+
 
 This is a python plugin for Character Creator 3 to re-import a character from Blender generated using the **CC3 Blender Tools** auto-setup add-on: https://github.com/soupday/cc3_blender_tools.
 
@@ -8,24 +11,21 @@ The character export from Blender must be generated with the **CC3 Blender Tools
 
 It is possible to include additional objects with the character exports from Blender by selecting them along with the character, but they must be parented to the character armature and have an armature modifier with valid vertex weights, otherwise CC3 will ignore them.
 
-Links
-=====
-[CC3/iClone Blender Tools](https://github.com/soupday/cc3_blender_tools)
+Troubleshooting
+===============
 
-[Baking Add-on](https://github.com/soupday/cc3_blender_bake)
+If after installing this plugin the plugin menu does not appear in Character Creator:
 
-## Demo Videos
+- Make sure you are using the correct version of the plugin for your version of Character Creator:
+    - Character Creator 3: [CC3 Blender Tools Plugin](https://github.com/soupday/CC3-Blender-Tools-Plugin)
+    - Character Creator 4: [CC4 Blender Tools Plugin](https://github.com/soupday/CC4-Blender-Tools-Plugin)
+- Make sure your version of Character Creator is up to date (at the time of writing):
+    - Character Creator 3: Version 3.44.4709.1
+    - Charatcer Creator 4: Version 4.12.1125.1
+- If the plugin still does not appear it may be that the Python API did not installed correctly and you may need to re-install Character Creator from Reallusion Hub.
 
-1st Demo Video: https://youtu.be/gRhbcTSt118
-(Mesh editing and material parameters)
-
-2nd Demo Video: https://youtu.be/T4ZU1EmJya0
-(Using material nodes to modify textures during export)
-
-3rd Demo Video: https://youtu.be/sr5dWQE6nQ0
-(Object Management and Item creation Demo)
-
-## Installation
+Installation
+============
 
 ### Installer
 - Download and run the installer ([Install-CC3BlenderToolsPlugin](https://github.com/soupday/CC3-Blender-Tools-Plugin/releases/download/1_0_4/Install-CC3BlenderToolsPlugin-1.0.4.exe)) from the [release page](https://github.com/soupday/CC3-Blender-Tools-Plugin/releases)
@@ -41,7 +41,8 @@ Links
 
 Alternatively the main.py script can run as a standalone script from the **Script > Load Python** menu.
 
-## Known Issues
+Known Issues
+============
 
 By default the FBX export settings have embed textures switched on, but this makes the export incompatible with re-importing the character back into CC3 as the textures are hidden in the original fbx and are not accessible to the file system.
 
@@ -62,6 +63,23 @@ These two issues can be difficult to reproduce and so might not be a problem at 
 - Some older characters import with the upper and lower teeth at odd angles. Replacing the teeth in CC3 will fix the issue. Alternatively there is an export option to reset the bone roll to zero on the upper and lower teeth bones. This appears to fix the problem but it is unknown if these changes to the teeth bones will cause further problems later.
 - There is a very strange problem where if the object has a very small number of vertices and faces (< 100) then the import into CC3 becomes very unstable and can cause a crash to desktop, even if that object was originally exported with the character from CC3.
 
+Links
+=====
+
+[CC3/iClone Blender Tools](https://github.com/soupday/cc3_blender_tools)
+
+[Baking Add-on](https://github.com/soupday/cc3_blender_bake)
+
+## Demo Videos
+
+1st Demo Video: https://youtu.be/gRhbcTSt118
+(Mesh editing and material parameters)
+
+2nd Demo Video: https://youtu.be/T4ZU1EmJya0
+(Using material nodes to modify textures during export)
+
+3rd Demo Video: https://youtu.be/sr5dWQE6nQ0
+(Object Management and Item creation Demo)
 
 ## Changelog
 
