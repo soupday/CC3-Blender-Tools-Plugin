@@ -81,7 +81,8 @@ Links
 3rd Demo Video: https://youtu.be/sr5dWQE6nQ0
 (Object Management and Item creation Demo)
 
-## Changelog
+Changelog
+=========
 
 ### 1.0.5
 - Fixed long path names causing textures to fail to load.
