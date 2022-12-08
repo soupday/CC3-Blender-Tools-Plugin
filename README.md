@@ -11,19 +11,6 @@ The character export from Blender must be generated with the **CC3 Blender Tools
 
 It is possible to include additional objects with the character exports from Blender by selecting them along with the character, but they must be parented to the character armature and have an armature modifier with valid vertex weights, otherwise CC3 will ignore them.
 
-Troubleshooting
-===============
-
-If after installing this plugin the plugin menu does not appear in Character Creator:
-
-- Make sure you are using the correct version of the plugin for your version of Character Creator:
-    - Character Creator 3: [CC3 Blender Tools Plugin](https://github.com/soupday/CC3-Blender-Tools-Plugin)
-    - Character Creator 4: [CC4 Blender Tools Plugin](https://github.com/soupday/CC4-Blender-Tools-Plugin)
-- Make sure your version of Character Creator is up to date (at the time of writing):
-    - Character Creator 3: Version 3.44.4709.1
-    - Charatcer Creator 4: Version 4.12.1125.1
-- If the plugin still does not appear it may be that the Python API did not installed correctly and you may need to re-install Character Creator from Reallusion Hub.
-
 Installation
 ============
 
@@ -40,6 +27,19 @@ Installation
 - Load the script into the project from the **Plugins > Blender Auto-setup > Import From Blender** menu.
 
 Alternatively the main.py script can run as a standalone script from the **Script > Load Python** menu.
+
+Troubleshooting
+===============
+
+If after installing this plugin the plugin menu does not appear in Character Creator:
+
+- Make sure you are using the correct version of the plugin for your version of Character Creator:
+    - Character Creator 3: [CC3 Blender Tools Plugin](https://github.com/soupday/CC3-Blender-Tools-Plugin)
+    - Character Creator 4: [CC4 Blender Tools Plugin](https://github.com/soupday/CC4-Blender-Tools-Plugin)
+- Make sure your version of Character Creator is up to date (at the time of writing):
+    - Character Creator 3: Version 3.44.4709.1
+    - Charatcer Creator 4: Version 4.12.1125.1
+- If the plugin still does not appear it may be that the Python API did not installed correctly and you may need to re-install Character Creator from Reallusion Hub.
 
 Known Issues
 ============
