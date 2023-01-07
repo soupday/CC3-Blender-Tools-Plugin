@@ -15,7 +15,7 @@ Installation
 ============
 
 ### Installer
-- Download and run the installer ([Install-CC3BlenderToolsPlugin](https://github.com/soupday/CC3-Blender-Tools-Plugin/releases/download/1_0_4/Install-CC3BlenderToolsPlugin-1.0.4.exe)) from the [release page](https://github.com/soupday/CC3-Blender-Tools-Plugin/releases)
+- Download and run the installer (__Install-CC3.Blender.Tools.Plugin-X.X.X.exe__) from the [release page](https://github.com/soupday/CC3-Blender-Tools-Plugin/releases)
 
 ### Manual Installation
 - Download the Zip file (__CC3-Blender-Tools-Plugin-main.zip__) from the **Code** button.
